@@ -2,7 +2,7 @@
 \alias{getGOTerm}
 \alias{getGOParents}
 \alias{getGOChildren}
-\alias{getGOOntology}
+\alias{getGOCategory}
 
 \title{Functions to Access GO data.  }
 \description{
@@ -16,7 +16,7 @@
 getGOTerm(x)
 getGOParents(x)
 getGOChildren(x)
-getGOOntology(x)
+getGOCategory(x)
 }
 \arguments{
   \item{x}{A character vector of valid GO identifiers. }
@@ -40,7 +40,7 @@ getGOOntology(x)
   If there was no match in any of the ontologies then a length zero list
   is returned for that element of \code{x}.
 
-  For \code{getGOOntology} a vector of categories (the names of which
+  For \code{getGOCategory} a vector of categories (the names of which
   are the original GO term names). Elements of this list that are
   \code{NA} indicate term names for which there is no category (and
   hence they are not really term names).
@@ -63,7 +63,7 @@ getGOOntology(x)
 
  gC <- getGOChildren(sG)
 
- gcat <- getGOOntology(sG)
+ gcat <- getGOCategory(sG)
 
 }
 \keyword{manip}

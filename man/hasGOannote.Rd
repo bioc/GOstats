@@ -2,26 +2,24 @@
 \alias{hasGOannote}
 \title{Check for GO annotation  }
 \description{
-  Given a GO term, or a vector of GO terms and an ontology this function
-  determines which of the terms have GO annotation in the specified
-  ontology. 
-
+  Given a GO term and an environment this function determines whether
+  there is an entry (or symbol) in the environment with the same name as
+  the term.
 }
 \usage{
 hasGOannote(x, which="MF")
 }
 \arguments{
-  \item{x}{A character vector, an instance of the \code{GOTerms} class
-  or a list of \code{GOTerms}. }
-  \item{which}{One of "MF", "BP" or "CC"}
+  \item{x}{A length one character vector. }
+  \item{which}{Either an environment or the name of an environment. By
+    default this is the MF parents environment. }
 }
 \details{
-  The available GO annotation is searched and a determination of
-  whether a specific GO identifier has a value in the specified
-  ontology is made.
+  The element \code{x} is searched for in the environment. If it is
+  found then \code{TRUE} is returned otherwise \code{FALSE} is returned.
 }
 \value{
-  A logical vector of the same length as \code{x}.
+  As described above.
 }
 \author{R. Gentleman}
 \seealso{\code{\link{get}}}

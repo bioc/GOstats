@@ -1,24 +1,29 @@
-##given a set of LOCUSLINK IDs obtain the GO graph that has all
+##given a set of gene/probe identifiers obtain the GO graph that has all
 ##GO ids that those genes are annotated at, and
-makeGOGraph <- function (x, Ontology = "MF", removeRoot=TRUE)
+makeGOGraph <- function (x, what = "MF", lib = "hgu95av2",
+                         removeRoot=TRUE)
 {
     require(GO) || stop("no GO library")
-    match.arg(Ontology, c("MF", "BP", "CC"))
-    wh <- paste("GO", Ontology, "PARENTS", sep = "")
-    dataenv = get(wh, mode="environment")
-    newNodes <- mget(x, env = GOLOCUSID2GO, ifnotfound=NA)
+    require(lib, character.only=TRUE, quietly=TRUE) ||
+                     stop("data library not available")
+    match.arg(what, c("MF", "BP", "CC"))
+    wh <- paste("GO", what, "PARENTS", sep = "")
+    dataenv <- get(wh, mode = "environment")
+    GOpkgname<- paste(lib, "GO", sep="")
+    GOpkgenv <- get(GOpkgname, mode="environment")
+    newNodes <- mget(x, env = GOpkgenv, ifnotfound=NA)
     if( length(newNodes) == 1)
        bd = is.na(newNodes[[1]])
     else
        bd = is.na(newNodes)
     newNodes <- newNodes[!bd]
 
-    newNodes <- lapply(newNodes, function(x) x[sapply(x, function(x)
-                                                      x$Ontology == Ontology)])
+    newNodes <- lapply(newNodes, function(x) x[sapply(x, hasGOannote,
+        what)])
     oldEdges <- vector("list", length = 0)
     oldNodes <- vector("character", length = 0)
     for (i in 1:length(newNodes)) {
-        newN <- unique(sapply(newNodes[[i]], function(x) x$GOID))
+        newN <- sapply(newNodes[[i]], function(x) x$GOID)
         done <- FALSE
         while (!done) {
             newN <- newN[!(newN %in% oldNodes)]
@@ -51,29 +56,19 @@ makeGOGraph <- function (x, Ontology = "MF", removeRoot=TRUE)
 }
 
 
- ## helper function, determines if there is a GO annotation for the
+ ## helper function, determines if there is a go annotation for the
  ## desired mode
  hasGOannote <- function(x, which="MF") {
-     if( is(x, "GOTerms") ) {
-         cat = Ontoloy(x)
-         if( !is.na(cat) && cat == which )
+     if( !is.null(x$Ontology) ) {
+         if( !is.na(x$Ontology) && x$Ontology == which )
             return(TRUE) else return(FALSE)
-     }
-     if( is.list(x) ) {
-         gT = sapply(x, function(y) is(y, "GOTerms"))
-         if( any(gT) ) {
-             if( all(gT) ) {
-                 cats = sapply(x, Ontology)
-                 return(cats == which)
-             }
-             else
-                 stop("mixed arguments not allowed")
-         }
      }
      if( !is.character(x) )
          stop("wrong argument")
-     tm <- getGOOntology(x)
-     return(tm == which)
+     tm <- get(x, env=GOTERM)
+     if( names(tm)[1] == which)
+         return(TRUE)
+     return(FALSE)
  }
 
 
@@ -82,12 +77,13 @@ makeGOGraph <- function (x, Ontology = "MF", removeRoot=TRUE)
 ##then at step 2, the nodes are A,B,C,D; new nodes B,C,D
 ##we need to find edges for each of them
 ##we're going to build a graphNEL
-GOGraph = function(x, dataenv) {
+oneGOGraph <- function(x, dataenv) {
     require(GO) || stop("no GO library")
-    if (!is.environment(dataenv))
+    if( length(x) > 1 )
+        stop("wrong number of GO terms")
+    if( !is.environment(dataenv) )
         stop("second argument must be an environment")
-    ##this is the old oneGOGraph code - but it just works for
-    ##multiple inputs
+
     oldEdges <- vector("list", length=0)
     oldNodes <- vector("character", length=0)
     newN <- x
@@ -119,20 +115,10 @@ GOGraph = function(x, dataenv) {
                function(x) list(edges=x)),edgemode="directed" ))
 }
 
-##to be deprecated
-oneGOGraph <- function(x, dataenv) {
-    require(GO) || stop("no GO library")
-    if( length(x) > 1 )
-        stop("wrong number of GO terms")
-    if (!is.environment(dataenv))
-        stop("second argument must be an environment")
-    GOGraph(x, dataenv)
-}
 ##given two GO graphs, g1 and g2 join them together into a single new
 ##GO graph
 combGOGraph <- function(g1, g2)
 {
-    .Deprecated("join", "graph")
     if( !is(g1, "graphNEL") || !is(g2, "graphNEL") )
         stop("both arguments must be GO graphs")
 
@@ -158,61 +144,43 @@ combGOGraph <- function(g1, g2)
       nG[sapply(iE, length) == 0]
   }
 
- ##similarity functions - based on graphs
- simUI = function(g1, g2) {
-     if(!is(g1, "graph") || !is(g2, "graph") )
-         stop("only works for graphs")
-     n1 = nodes(g1); n2 = nodes(g2)
-    length(intersect(n1, n2))/length(union(n1, n2))
+ ##distance between GO terms as described in B. Ding/R. Gentleman
+ distDGGO <- function(term1, term2, dataenv) {
+     g1 <- oneGOGraph(term1, dataenv)
+     g2 <- oneGOGraph(term2, dataenv)
+     n1 <- nodes(g1)
+     n2 <- nodes(g2)
+     ##drop the GO root -- if there
+     m1 <- match("GO:0003673", n1)
+     if( !is.na(m1) ) n1 <- n1[-m1]
+     m2 <- match("GO:0003673", n2)
+     if( !is.na(m2) ) n2 <- n2[-m2]
+     length(intersect(n1,n2))/length(union(n1,n2))
  }
 
- simLP = function(g1, g2) {
-    if(!is(g1, "graph") || !is(g2, "graph") )
-         stop("only works for graphs")
-    require("RBGL") || stop("need RBGL for this similarity")
-    ig <- intersection(g1, g2)
-    lfi <- GOLeaves(ig)
-    degs = degree(ig)
-    root = names(degs$outDegree)[degs$outDegree == 0]
-    paths = sp.between(ig, lfi, root)
-    plens = sapply(paths, function(x) x$length)
-    max(plens)
-}
-
- ##a helper function to get the right GOIDs
- .getWHEC = function(llid, wh, eCodes) {
-     x = GOLOCUSID2GO[[llid]]
-     if( !is.null(eCodes) )
-         x = dropECode(x, eCodes)
-     unique(unlist(getOntology(x, wh)))
-  }
-
- simLL = function(ll1, ll2, Ontology="MF", measure = "LP",
-                      dropCodes=NULL) {
-    wh = match.arg(Ontology, c("MF", "BP", "CC"))
-    ll1GO = .getWHEC(ll1, wh, dropCodes)
-    ll2GO = .getWHEC(ll2, wh, dropCodes)
-    dataenv = get(paste("GO", wh, "PARENTS", sep=""),
-                    mode="environment")
-    g1 = GOGraph(ll1GO, dataenv)
-    g2 = GOGraph(ll2GO, dataenv)
-    sm = match.arg(measure, c("LP", "UI"))
-    sim = switch(sm,
-           LP = simLP(g1, g2),
-           UI = simUI(g1, g2))
-    return(list(sim=sim, measure=measure, g1 = g1, g2 =g2))
-  }
-
+ ##the distance suggested by Cheng et al
+ distCGO <- function(term1, term2, dataenv) {
+     if( is(term1, "graph") )
+         g1 <- term1
+     else
+         g1 <- oneGOGraph(term1, dataenv)
+     if( is(term2, "graph") )
+         g2 <- term2
+     else
+         g2 <- oneGOGraph(term2, dataenv)
+     ig <- intersection(g1, g2)
+     lfi <- GOleaves(ig)
+     ##need a pathlength
+ }
 
 ##three functions to get all the GO information for a set of GO terms
-##FIXME: these need to be renovated - probably removed even..
- getGOOntology <- function(x) {
+ getGOCategory <- function(x) {
      if( !is.character(x) )
          stop("need a character argument")
      if(length(x) == 0 )
          return( character(0))
      wh <- mget(x, env=GOTERM, ifnotfound=NA)
-     return( sapply(wh, Ontology) )
+     return( sapply(wh, function(x) names(x)) )
  }
 
  getGOParents <- function(x) {
@@ -252,6 +220,8 @@ combGOGraph <- function(g1, g2)
      lenx <- length(x)
      rval <- vector("list", length=lenx)
      names(rval) <- x
+     rval <- vector("list", length=lenx)
+     names(rval) <- x
      for(i in 1:lenx) {
          if( (length(hasMF[[i]]) > 1 ) || !is.na(hasMF[[i]]) )
              rval[[i]] <- list(Ontology="MF", Children=hasMF[[i]])
@@ -271,12 +241,6 @@ combGOGraph <- function(g1, g2)
      if(length(x) == 0 )
          return(list())
      terms <- mget(x, env=GOTERM, ifnotfound=NA)
-     ##cannot use is.na, because GOTerms objects are 0 length lists
-     isNA = sapply(terms, function(x) !(is(x, "GOTerms")))
-     if( any(isNA) )
-         terms = terms[!isNA]
-
-     ontology <- sapply(terms, Ontology)
-     terms = sapply(terms, Term)
+     ontology <- sapply(terms, function(x) names(x))
      return(split(terms, ontology))
  }

@@ -17,7 +17,7 @@ shortestPath <- function(g, GOnode)
 
     ##obtain the LLIDs at the GO term
 
-    LLs <- get(GOnode, GOLOCUSID)
+    LLs <- get(GOnode, GOGO2LL)
 
     m1 <- match(LLs, nodes(g))
     notthere <- LLs[is.na(m1)]
@@ -42,7 +42,6 @@ shortestPath <- function(g, GOnode)
 }
 
 compGdist <- function(g, whNodes, verbose=FALSE) {
-    require("RBGL") || stop("need RBGL for compGdist")
     rval <- NULL
     nNodes = length(whNodes)
     for(i in 1:nNodes) {
@@ -63,12 +62,10 @@ compCorrGraph <- function(eSet, k=1, tau=0.6) {
     if( tau < 0 || tau > 1 ) stop("bad tau value")
     cB <- abs(cor(t(exprs(eSet))))
     cB[cB < tau] <- 0
-    whE = cB>0
-    ##FIXME: any two genes whose exprssion values are perfectly
-    ##correlated will get dropped - seems pretty unlikely
+    whE = cB[cB>0]
     cB[whE] <- ((1-cB)[whE])^k
-    ##set diag to zero, since we do not want self-edges
     diag(cB) = 0
+    ##FIXME: cB=1?
     require("SparseM", quietly=TRUE) || stop("need SparseM package")
     v1<-as.matrix.csr(cB, nr=dim(cB)[1], nc=dim(cB)[2])
     rv <- sparseM2Graph(v1, geneNames(eSet))
