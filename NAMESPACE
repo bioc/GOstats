@@ -32,5 +32,4 @@ exportMethods("hyperGTest", "getGoGraph",
               "geneMappedCount",
               "annotation",
               "testName",
-              "summary",
-              "htmlReport")
+              "summary")
