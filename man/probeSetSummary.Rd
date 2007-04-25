@@ -52,7 +52,11 @@ probeSetSummary(result, pvalue, categorySize)
   of the element).  Each \code{data.frame} has three columns:
   the Entrez Gene ID (\code{EntrezID}), the probe set ID
   (\code{ProbeSetID}), and a 0/1 indicator of whether the probe set ID
-  was provided as part of the initial input (\code{selected}).
+  was provided as part of the initial input (\code{selected})
+
+  Note that this 0/1 indicator will only be correct if the 'geneId'
+  vector used to construct the \code{GOHyperGParams} object was a named
+  vector (where the names are probeset IDs).
 }
 
 \author{S. Falcon and J. MacDonald}
