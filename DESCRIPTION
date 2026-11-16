@@ -1,6 +1,6 @@
 Package: GOstats
 Title: Tools for manipulating GO and microarrays
-Version: 2.79.0
+Version: 2.79.1
 Authors@R: c(
         person("Robert", "Gentleman", role="aut"),
         person("Seth", "Falcon", role="ctb"),
@@ -21,7 +21,7 @@ Imports: methods, stats, stats4, AnnotationDbi (>= 0.0.89),
         Rgraphviz
 Suggests: hgu95av2.db (>= 1.13.0), ALL,
         multtest, genefilter, RColorBrewer, xtable, SparseM,
-        GSEABase, geneplotter, org.Hs.eg.db, RUnit, BiocGenerics, BiocStyle, knitr
+        GSEABase, geneplotter, org.Hs.eg.db (>= 3.24.6), RUnit, BiocGenerics, BiocStyle, knitr
 License: Artistic-2.0
 Collate: zzz.R AllClasses.R AllGenerics.R hyperGTest-methods.R
         GOHyperGResult-accessors.R GOgraph.R GOhyptest.R hyperGtable.R
