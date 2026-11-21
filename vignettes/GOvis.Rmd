@@ -20,7 +20,15 @@ link-citations: yes
 csl: bioinformatics.csl
 ---
 
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(eval = FALSE)
+```
+
 # Introduction {#introduction .unnumbered}
+
+NB Nov 21 2026: This vignette was created before lots of additional
+complexity emerged in GO.  The rendering process seems to be causing
+build failures on some platforms.  VJC has disabled evaluation for now.
 
 The basic characteristics of the GO [@GO] data are described in @GO and the
 interested reader is referred there for more details. In this paper we assume
