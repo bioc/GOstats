@@ -29,6 +29,7 @@ knitr::opts_chunk$set(eval = FALSE)
 NB Nov 21 2026: This vignette was created before lots of additional
 complexity emerged in GO.  The rendering process seems to be causing
 build failures on some platforms.  VJC has disabled evaluation for now.
+Inline code had to be blocked too!
 
 The basic characteristics of the GO [@GO] data are described in @GO and the
 interested reader is referred there for more details. In this paper we assume
@@ -155,7 +156,7 @@ samples to be deemed interesting. For our purposes we consider a gene to be
 expressed if its value is greater than 100. We also introduce a second selection
 criteria that is based on differences between the group means. We require that
 the difference between the smallest group mean and the largest be larger than
-100 units. Applying both of these transformations yielded `r sum(selected)`
+100 units. Applying both of these transformations yielded `r if (FALSE) sum(selected)`
 probes that were differentially expressed.
 
 ```{r mtFstats, results='hide', echo=FALSE}
@@ -174,15 +175,15 @@ lls <- as.character(lls[!is.na(lls)])
 syms <- unlist(mget(gN, hgu95av2SYMBOL, ifnotfound = NA))
 ```
 
-Next restricting attention to just these `r sum(selected)` probes we
+Next restricting attention to just these `r if (FALSE) sum(selected)` probes we
 use the `r Rpackage("mt.maxT")` function from the `r Biocpkg("multtest")`
 package to compute adjusted $p$-values for F-test comparisons.  We found
-`r sum(Fstats$adjp < pvCutOff)` of these to have adjusted $p$-values less
-than `r round(pvCutOff, 2)`. We will deem these to be the differentially
+`r if (FALSE) sum(Fstats$adjp < pvCutOff)` of these to have adjusted $p$-values less
+than `r if (FALSE) round(pvCutOff, 2)`. We will deem these to be the differentially
 expressed genes and will now turn our attention to using GO to gain a
 better understanding of the associated genes.  Before going further 
-though, we note that these `r sum(Fstats$adjp < pvCutOff)` probes map to
-`r sum(!duplicated(lls))` distinct Entrez Gene identifiers and since
+though, we note that these `r if (FALSE) sum(Fstats$adjp < pvCutOff)` probes map to
+`r if (FALSE) sum(!duplicated(lls))` distinct Entrez Gene identifiers and since
 our GO mappings are based on Entrez Gene we further reduce our attention
 to these. We kept the first (in index order) of each of the duplicated
 probes for any analyses or computations that require gene expression
